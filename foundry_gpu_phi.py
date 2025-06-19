@@ -1,34 +1,29 @@
 """Run this model in Python
 
-> pip install openai
+> pip install azure-ai-inference
 """
-from openai import OpenAI
+import os
+from azure.ai.inference import ChatCompletionsClient
+from azure.ai.inference.models import AssistantMessage, SystemMessage, UserMessage, ToolMessage
+from azure.ai.inference.models import ImageContentItem, ImageUrl, TextContentItem
+from azure.core.credentials import AzureKeyCredential
 
-client = OpenAI(
-    base_url = "http://localhost:5272/v1/",
-    api_key = "unused", # required for the API but not used
+# To authenticate with the model you will need to generate a personal access token (PAT) in your GitHub settings.
+# Create your PAT token by following instructions here: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+client = ChatCompletionsClient(
+    endpoint = "https://models.inference.ai.azure.com",
+    credential = AzureKeyCredential(os.environ["GITHUB_TOKEN"]),
 )
 
-response = client.chat.completions.create(
+response = client.complete(
     messages = [
-        {
-            "role": "system",
-            "content": "You are a helpful assistant.",
-        },
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "Who is the CEO of Microsoft?",
-                },
-            ],
-        },
+        UserMessage(content = [
+            TextContentItem(text = "Who is the CEO of Microsoft?"),
+        ]),
     ],
-    model = "Phi-4-mini-gpu-int4-rtn-block-32",
-    max_tokens = 256,
+    model = "Phi-4-mini-instruct",
     temperature = 0.8,
-    frequency_penalty = 1,
+    top_p = 0.1,
 )
 
 print(response.choices[0].message.content)
